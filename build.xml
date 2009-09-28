@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project basedir="." default="jar" name="JRuby-with-gems">
+  <description>Create jar containing complete JRuby with desired gems</description>
+  
+  <property environment="env"/>
+
+  <property name="jar.final" value="jruby-with-gems.jar"/>
+
+  <property name="jruby.git.url" value="git://github.com/jruby/jruby.git"/>
+
+  <property name="dir.jruby.source" value="${basedir}/jruby"/>
+  <property name="jruby.jar.complete" value="${dir.jruby.source}/lib/jruby-complete.jar"/>
+
+  <property name="dir.build" value="${basedir}/build"/>
+  <property name="dir.gem.target" value="${dir.build}/META-INF/jruby.home/lib/ruby/gems/1.8/gems"/>
+  <property name="dir.gem.source" value="${basedir}/lib/ruby/gems/1.8/gems"/>
+
+  <property name="gem.hpricot" value="hpricot-0.6.164-java"/>
+  <property name="gem.openssl" value="jruby-openssl-0.5.2"/>
+  <property name="gem.json" value="json-jruby-1.1.7-universal-java-1.6"/>
+
+  <property name="dir.gem.source.hpricot" value="${dir.gem.source}/${gem.hpricot}"/>
+  <property name="dir.gem.target.hpricot" value="${dir.gem.target}/${gem.hpricot}"/>
+  <property name="embed.jar.hpricot1" value="${dir.gem.source.hpricot}"/>
+
+  <target name="check-jruby-source-available">
+    <uptodate property="jruby-source-available"
+              srcfile="${dir.jruby.source}/build.xml"
+              targetfile="${dir.jruby.source}/build.xml"/>
+  </target>
+
+  <target name="jruby-clone"
+          depends="check-jruby-source-available"
+          unless="jruby-source-available">
+    <exec executable="git">
+      <arg value="clone"/>
+      <arg value="${jruby.git.url}"/>
+      <arg value="${dir.jruby.source}"/>
+    </exec>
+  </target>
+
+  <target name="check-jruby-built"
+          depends="jruby-clone">
+    <uptodate property="jruby-built"
+              srcfile="${dir.jruby.source}/build.xml"
+              targetfile="${jruby.jar.complete}"/>
+  </target>
+
+  <target name="jruby-build"
+          depends="check-jruby-built"
+          unless="jruby-built">
+    <ant dir="${dir.jruby.source}" target="jar-complete"/>
+  </target>
+
+  <target name="init">
+    <mkdir dir="${dir.build}"/>
+  </target>
+
+  <target name="check-jruby-unpacked">
+    <uptodate property="jruby-unpacked"
+              srcfile="${dir.build}/org/jruby/JRubyServer.class"
+              targetfile="${dir.build}/org/jruby/JRubyServer.class"/>
+  </target>
+
+  <target name="unpack-jruby"
+          unless="jruby-unpacked"
+          depends="init,check-jruby-unpacked">
+    <unjar src="${jruby.jar.complete}" dest="${dir.build}"/>
+  </target>
+
+  <target name="check-gems-installed">
+    <uptodate property="gems-installed"
+              srcfile="${dir.build}/META-INF/jruby.home/gems/hpricot-0.6.164-java/lib/universal-java1.6/fast_xs.jar"
+              targetfile="${dir.build}/META-INF/jruby.home/gems/hpricot-0.6.164-java/lib/universal-java1.6/fast_xs.jar"/>
+  </target>
+
+  <target name="install-gems"
+          depends="check-gems-installed,unpack-jruby"
+          unless="gems-installed">
+    <exec executable="${dir.jruby.source}/bin/jgem"
+          dir="${dir.jruby.source}">
+      <env key="PATH" path="${dir.jruby.source}/bin:${env.PATH}"/>
+      <env key="GEM_HOME" path="${dir.build}/META-INF/jruby.home"/>
+      <arg value="install"/>
+      <arg value="--no-rdoc"/>
+      <arg value="--no-ri"/>
+      <arg value="json-jruby"/>
+      <arg value="jruby-openssl"/>
+    </exec>
+    <!-- for some reason this fails unless hpricot is separate -->
+    <exec executable="${dir.jruby.source}/bin/jgem"
+          dir="${dir.jruby.source}">
+      <env key="PATH" path="${dir.jruby.source}/bin:${env.PATH}"/>
+      <env key="GEM_HOME" path="${dir.build}/META-INF/jruby.home"/>
+      <arg value="install"/>
+      <arg value="--no-rdoc"/>
+      <arg value="--no-ri"/>
+      <arg value="hpricot"/>
+      <arg value="--version"/>
+      <arg value="~>0.6.1"/>
+    </exec>
+  </target>
+
+  <target name="unpack-gem-jars"
+          depends="install-gems">
+    <unjar src="${dir.build}/META-INF/jruby.home/lib/ruby/site_ruby/shared/yecht.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/json-jruby-1.1.7-universal-java-1.6/lib/json/ext/parser.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/json-jruby-1.1.7-universal-java-1.6/lib/json/ext/generator.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/hpricot-0.6.164-java/lib/universal-java1.6/fast_xs.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/hpricot-0.6.164-java/lib/universal-java1.6/hpricot_scan.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/jruby-openssl-0.5.2/lib/bcmail-jdk14-139.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/jruby-openssl-0.5.2/lib/jopenssl.jar"
+           dest="${dir.build}"/>
+    <unjar src="${dir.build}/META-INF/jruby.home/gems/jruby-openssl-0.5.2/lib/bcprov-jdk14-139.jar"
+           dest="${dir.build}"/>
+  </target>
+
+  <target name="jar" depends="unpack-gem-jars">
+    <jar destfile="${jar.final}"
+         basedir="${dir.build}"
+         excludes="**/*.jar,**/MANIFEST.MF,**/BCKEY.*"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="${dir.build}"/>
+  </target>
+
+  <target name="distclean" depends="clean">
+    <delete dir="${dir.jruby.source}"/>
+    <delete file="${jar.final}"/>
+  </target>
+
+</project>
