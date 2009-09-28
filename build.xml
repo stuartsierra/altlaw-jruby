@@ -65,7 +65,7 @@
 
   <target name="unpack-jruby"
           unless="jruby-unpacked"
-          depends="init,check-jruby-unpacked">
+          depends="init,jruby-build,check-jruby-unpacked">
     <unjar src="${jruby.jar.complete}" dest="${dir.build}"/>
   </target>
 
