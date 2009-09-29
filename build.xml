@@ -5,24 +5,17 @@
   
   <property environment="env"/>
 
-  <property name="jar.final" value="jruby-with-gems.jar"/>
+  <property name="dir.target" value="${basedir}/target"/>
+
 
   <property name="jruby.git.url" value="git://github.com/jruby/jruby.git"/>
 
-  <property name="dir.jruby.source" value="${basedir}/jruby"/>
+  <property name="dir.jruby.source" value="${dir.target}/jruby"/>
   <property name="jruby.jar.complete" value="${dir.jruby.source}/lib/jruby-complete.jar"/>
+  <property name="jar.final" value="${dir.jruby.source}/jruby-with-gems.jar"/>
 
-  <property name="dir.build" value="${basedir}/build"/>
+  <property name="dir.build" value="${dir.target}/classes"/>
   <property name="dir.gem.target" value="${dir.build}/META-INF/jruby.home/lib/ruby/gems/1.8/gems"/>
-  <property name="dir.gem.source" value="${basedir}/lib/ruby/gems/1.8/gems"/>
-
-  <property name="gem.hpricot" value="hpricot-0.6.164-java"/>
-  <property name="gem.openssl" value="jruby-openssl-0.5.2"/>
-  <property name="gem.json" value="json-jruby-1.1.7-universal-java-1.6"/>
-
-  <property name="dir.gem.source.hpricot" value="${dir.gem.source}/${gem.hpricot}"/>
-  <property name="dir.gem.target.hpricot" value="${dir.gem.target}/${gem.hpricot}"/>
-  <property name="embed.jar.hpricot1" value="${dir.gem.source.hpricot}"/>
 
   <target name="check-jruby-source-available">
     <uptodate property="jruby-source-available"
@@ -120,6 +113,9 @@
            dest="${dir.build}"/>
     <unjar src="${dir.build}/META-INF/jruby.home/gems/jruby-openssl-0.5.2/lib/bcprov-jdk14-139.jar"
            dest="${dir.build}"/>
+    <delete file="${dir.build}/META-INF/MANIFEST.MF"/>
+    <delete file="${dir.build}/META-INF/BCKEY.DSA"/>
+    <delete file="${dir.build}/META-INF/BCKEY.SF"/>
   </target>
 
   <target name="jar" depends="unpack-gem-jars">
